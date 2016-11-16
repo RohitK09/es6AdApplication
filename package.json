@@ -1,0 +1,23 @@
+{
+  "name": "kargonode-adserver",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "build": "babel code/ -d lib",
+     "start": "npm run build && node lib/app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "moments": "0.0.2",
+    "mongoose": "^4.6.7",
+    "monk": "^3.1.3",
+    "winston": "^2.3.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-preset-latest": "^6.16.0"
+  }
+}
