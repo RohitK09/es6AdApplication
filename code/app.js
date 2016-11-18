@@ -13,7 +13,7 @@ let app = express();
  * 
  */
 app.use(bodyparser.json());
-app.use('/api/getAdvertisement/:typeOfAdvert', function (req, res) {
+app.use('/api/getAdvertisement/:typeOfAdvert?', function (req, res) {
   let typeOfAdvert = req.params.typeOfAdvert;
   adservice.getAdvertisement(typeOfAdvert).then(function(htmlData){
     res.send(htmlData);

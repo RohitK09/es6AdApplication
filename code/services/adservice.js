@@ -1,30 +1,42 @@
-import mongoose from "mongoose";
+
 import Advertisement from "../models/advertisement";
 import monk from "monk";
 import log from "./logservice";
 import util from './utilservice';
 import moment from 'moment';
-//import db from "../util/dbUtil";
-mongoose.Promise = global.Promise;
 import config from '../config/config';
-log.debug(config);
+
+const nodeCache = require("node-cache");
+const cache = new nodeCache();
 const db = monk(config.dbConnect);
 const advertisement = db.get('advertisement');
+
+
 
 
 let adservice = {};
 adservice.getAdvertisement = function (typeOfAdvertisement) {
     console.log(typeOfAdvertisement);
+
     return new Promise(function (resolve, reject) {
-        advertisement.find({
-            "format": typeOfAdvertisement, "impressions": { "$gt": 0 }, "startDate": { "$lt": new Date() }, "endDate": {
-                "$gte": new Date()
-            }
-        }).then(function (listOfAdverts) {
+        _findAdverts(typeOfAdvertisement).then(function (listOfAdverts) {
             console.log(JSON.stringify(listOfAdverts));
-            if (listOfAdverts.length >1) {
+
+            if (listOfAdverts.length > 1) {
                 _getAndUpdateSingleAdvert(typeOfAdvertisement).then(function (resData) {
-                    resolve(resData.advertHtml);
+                    if (resData.advertHtml) {
+                        resolve(resData.advertHtml);
+                    } else {
+                        _updateToTrue(typeOfAdvertisement).then(function (status) {
+                            log.debug("status", status);
+                            _getAndUpdateSingleAdvert().then(function (resData) {
+                                log.debug('advert', resData);
+                                resolve(resData.advertHtml);
+                            })
+                        }).catch(function (err) {
+                            log.error("error", err);
+                        })
+                    }
                 }).catch(function (dbGetErr) {
                     log.error("Error at Advertisement find at advertisement.find()", JSON.stringify(dbGetErr));
                     reject(dbGetErr);
@@ -107,15 +119,60 @@ let _CheckForArray = function (listOfAdverts) {
 }
 
 let _getAndUpdateSingleAdvert = function (typeOfAdvertisement) {
-    console.log('Test:',typeOfAdvertisement);
-    return advertisement.findOneAndUpdate(
-        { "format": typeOfAdvertisement, "impressions": { "$gt": 0 }, "startDate": { "$lt": new Date() }, "endDate": { "$gte": new Date() },"isCalled":false },
-        {
-            $inc: { "impressions": -1 }
-            , $set: { "isCalled": true }
-        },
-    );
+    console.log('Test:', typeOfAdvertisement);
+    if (typeOfAdvertisement) {
+        return advertisement.findOneAndUpdate(
+            { "format": typeOfAdvertisement, "impressions": { "$gt": 0 }, "startDate": { "$lt": new Date() }, "endDate": { "$gte": new Date() },"isCalled": false },
+            {
+                $inc: { "impressions": -1 },
+                 $set: { "isCalled": true }
+            },
+        );
+    } else {
+        return advertisement.findOneAndUpdate(
+            { "impressions": { "$gt": 0 }, "startDate": { "$lt": new Date() }, "endDate": { "$gte": new Date() }, "isCalled": false },
+            {
+                $inc: { "impressions": -1 }
+                , $set: { "isCalled": true }
+            },
+        );
+    }
+
 }
 
+let _findAdverts = function (typeOfAdvertisement) {
+    if (typeOfAdvertisement) {
+        return advertisement.find({
+            "format": typeOfAdvertisement, "impressions": { "$gt": 0 }, "startDate": { "$lt": new Date() }, "endDate": {
+                "$gte": new Date()
+            }
+        });
 
+    } else {
+        return advertisement.find({
+            "impressions": { "$gt": 0 }, "startDate": { "$lt": new Date() }, "endDate": {
+                "$gte": new Date()
+            }
+        });
+    }
+}
+let _updateToTrue = function (typeOfAdvertisement) {
+
+    if (typeOfAdvertisement) {
+        return advertisement.update(
+            {
+                "format": typeOfAdvertisement, "impressions": { "$gt": 0 }, "startDate": { "$lt": new Date() }, "endDate": {
+                    "$gte": new Date()
+                }
+            }, {
+                $set: { "isCalled": false }
+            }, { multi: true }
+        );
+    } else {
+        log.debug("isCalled");
+        return advertisement.update({ "impressions": { "$gt": 0 }, "startDate": { "$lt": new Date() }, "endDate": { "$gte": new Date() } },
+            { $set: { "isCalled": false } },
+            { multi: true });
+    }
+}
 module.exports = adservice;
