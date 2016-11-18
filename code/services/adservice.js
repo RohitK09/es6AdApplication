@@ -6,17 +6,12 @@ import util from './utilservice';
 import moment from 'moment';
 import config from '../config/config';
 
-const nodeCache = require("node-cache");
-const cache = new nodeCache();
 const db = monk(config.dbConnect);
 const advertisement = db.get('advertisement');
 
-
-
-
 let adservice = {};
 adservice.getAdvertisement = function (typeOfAdvertisement) {
-    console.log(typeOfAdvertisement);
+    log.debug("typeOfAdvertisement",typeOfAdvertisement);
 
     return new Promise(function (resolve, reject) {
         _findAdverts(typeOfAdvertisement).then(function (listOfAdverts) {

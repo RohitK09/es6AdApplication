@@ -6,7 +6,7 @@ utilService.isDefined = jsonObj => {
     if (jsonObj !== null && jsonObj !== undefined) {
         return true;
     }
-    log.debug('found null, undefined at' );
+    log.debug('found null, undefined at isDefined()' );
     return false;
 };
 module.exports = utilService;

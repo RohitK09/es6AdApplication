@@ -1,4 +1,4 @@
-import moment from 'moment';
+
 
 class Advertisement {
 
@@ -15,6 +15,4 @@ class Advertisement {
 
 
 }
-
-//let Advertisement = mongoose.model('advertisement', advertisementSchema);
 module.exports = Advertisement;
